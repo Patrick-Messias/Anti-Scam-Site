@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+venv/
+env/
+.venv/
+
+# Environment
+.env
+.venv
+
+# Database
+*.db
+*.sqlite
+instance/
+
+# IDE
+.vscode/
+.idea/
+
+# Flask
+*.log
+*.pot
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Arquivos gerados
+staticfiles/
+uploads/
