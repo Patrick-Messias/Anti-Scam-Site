@@ -2,7 +2,21 @@
 
 {% block content %}
 
+ <!-- Home Page -->
+<div class="container mt-5">
+    <h1>Bem-vindo ao Site Anti-Golpe</h1>
+    <p>Denuncie golpes e proteja outros usuários</p>
+    
+    {% if current_user.is_authenticated %}
+        <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Painel</a>
+    {% else %}
+        <a href="{{ url_for('login') }}" class="btn btn-success">Comece Aqui</a>
+    {% endif %}
+</div>
+
 <!-- Navbar Section (now handled by base.html) -->
+
+<div class="mb-5"></div>  <!-- Margem bottom de 3rem (48px) -->
 
 <!-- Carousel Section -->
 <div id="carouselExampleIndicators" class="carousel slide mb-4">
@@ -67,6 +81,13 @@
     </div>
 </div>
 
+<div class="container text-center mt-4">
+    <a href="#top" class="btn btn-outline-primary me-2">↑ Topo</a>
+    {% if not current_user.is_authenticated %}
+        <a href="{{ url_for('login') }}" class="btn btn-primary">Área de Membros</a>
+    {% endif %}
+</div>
+
 <!-- Scam Examples Section -->
 <div class="container mb-4">
     <div class="row">
@@ -96,3 +117,5 @@
 </div>
 
 {% endblock %}
+
+

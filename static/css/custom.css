@@ -1,0 +1,9 @@
+/* Botão voltar flutuante (para telas grandes) */
+@media (min-width: 992px) {
+    .btn-back {
+        position: fixed;
+        left: 20px;
+        top: 100px;
+        z-index: 1000;
+    }
+}

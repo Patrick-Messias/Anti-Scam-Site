@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <a href="{{ url_for('home') }}" class="btn btn-outline-primary mb-4">
+        ← Voltar para Home
+    </a>
+
+<div class="container mt-5">
+    <h1>Olá, {{ name }}!</h1>
+    <p>Você está logado como {{ current_user.type_user }}.</p>
+    <a href="{{ url_for('logout') }}" class="btn btn-danger">Sair</a>
+</div>
+</div>
+{% endblock %}

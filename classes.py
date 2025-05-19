@@ -36,21 +36,18 @@ class Site(ClassUtils):
 
 
 class User(ClassUtils, UserMixin):
-    def __init__(self, id: int, name: str, email: str, password: str, 
-                 type_user: str, confidence: float, age: int, 
-                 city: str, state: str, civil_state: str):
-        super().__init__()
+    def __init__(self, id, name, email, password_hash, type_user='noob',
+                 confidence=1.0, age=None, city=None, state=None, civil_state=None):
         self.id = id
         self.name = name
         self.email = email
-        self.password_hash = generate_password_hash(password)
+        self.password_hash = password_hash  # Note que é password_hash, não password
         self.type_user = type_user
         self.confidence = confidence
         self.age = age
         self.city = city
         self.state = state
         self.civil_state = civil_state
-        self.permissions_set()
 
     def permissions_set(self):
         self.can_check_tutorials = self.confidence >= 1.0
@@ -62,7 +59,7 @@ class User(ClassUtils, UserMixin):
             raise PermissionError("User lacks permissions to report scams.")
         return DigitalScam(name, site, type_scam, 0.0, 0.0, evidence, self)
 
-    def check_password(self, password: str) -> bool:
+    def check_password(self, password):
         return check_password_hash(self.password_hash, password)
     
 class UserNoob(User):
