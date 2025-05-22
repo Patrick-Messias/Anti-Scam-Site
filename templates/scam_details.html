@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <a href="{{ url_for('list_scams') }}" class="btn btn-outline-secondary mb-4">
+        <i class="bi bi-arrow-left"></i> Voltar para denúncias
+    </a>
+    
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h2>{{ scam['title'] }}</h2>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <p><strong>Tipo:</strong> <span class="badge bg-warning text-dark">{{ scam['scam_type'] }}</span></p>
+                    <p><strong>Data:</strong> {{ scam['created_at'][:16] }}</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p><strong>Reportado por:</strong> {{ scam['author'] }} ({{ scam['author_email'] }})</p>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <h4>Descrição</h4>
+                <p class="text-justify">{{ scam['description'] }}</p>
+            </div>
+            
+            {% if scam['evidence'] %}
+            <div class="mb-4">
+                <h4>Evidência</h4>
+                <div class="p-3 bg-light rounded">
+                    {% if scam['evidence']|is_url %}
+                        <a href="{{ scam['evidence'] }}" target="_blank" class="btn btn-outline-primary">
+                            <i class="bi bi-link-45deg"></i> Acessar Evidência
+                        </a>
+                    {% else %}
+                        <p>{{ scam['evidence'] }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

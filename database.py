@@ -26,12 +26,12 @@ class Database:
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS scams (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                type_scam TEXT NOT NULL,
-                danger_level REAL DEFAULT 0.0,
-                damage_level REAL DEFAULT 0.0,
-                evidence TEXT DEFAULT '',
+                title TEXT NOT NULL,
+                description TEXT NOT NULL,
+                scam_type TEXT NOT NULL,
+                evidence TEXT,
                 user_id INTEGER NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(id)
             )
         ''')
@@ -71,7 +71,18 @@ class Database:
     def get_all_scams(self):
         cursor = self.conn.cursor()
         cursor.execute('SELECT * FROM scams')
-        return [DigitalScam(*row) for row in cursor.fetchall()]
+        scams = []
+        for row in cursor.fetchall():
+            scams.append({
+                'id': row[0],
+                'title': row[1],
+                'description': row[2],
+                'scam_type': row[3],
+                'evidence': row[4],
+                'user_id': row[5],
+                'created_at': row[6]
+            })
+        return scams
     
     def get_user_by_id(self, user_id):
         cursor = self.conn.cursor()
@@ -97,6 +108,19 @@ if __name__ == '__main__':
     # Teste local do banco de dados (opcional)
     db = Database()
     print("Banco de dados inicializado com sucesso.")
+
+    # TEMP
+    cursor = db.conn.cursor()
+    cursor.execute("PRAGMA table_info(scams)")
+
+    print("\nEstrutura da tabela scams:")
+    for column in cursor.fetchall():
+        print(column)
+    
+    print("\nPrimeiras 5 linhas da tabela scams:")
+    cursor.execute("SELECT * FROM scams LIMIT 5")
+    for row in cursor.fetchall():
+        print(row)
 
 
 

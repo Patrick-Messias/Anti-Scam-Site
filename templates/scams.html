@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Denúncias Recentes</h2>
+    <a href="{{ url_for('report_scam') }}" class="btn btn-success mb-4">
+        <i class="bi bi-plus-circle"></i> Nova Denúncia
+    </a>
+    
+    <div class="row">
+        {% for scam in scams %}
+        <div class="col-md-6 mb-4">
+            <div class="card scam-card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">{{ scam['title'] }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="badge bg-warning text-dark">{{ scam['scam_type'] }}</span>
+                        <small class="text-muted">{{ scam['created_at'][:10] }}</small>
+                    </div>
+                    
+                    <p class="card-text">{{ scam['description'] }}</p>
+                    
+                    {% if scam['evidence'] %}
+                    <div class="evidence-box mt-3 p-2 bg-light rounded">
+                        <strong>Evidência:</strong> 
+                        {% if scam['evidence']|is_url %}
+                            <a href="{{ scam['evidence'] }}" target="_blank">Ver evidência</a>
+                        {% else %}
+                            {{ scam['evidence'] }}
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">Por {{ scam['author'] }}</small>
+                        <a href="{{ url_for('scam_details', scam_id=scam['id']) }}" 
+                           class="btn btn-sm btn-primary">
+                            <i class="bi bi-eye"></i> Ver Detalhes
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

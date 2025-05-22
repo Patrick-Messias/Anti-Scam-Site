@@ -3,6 +3,7 @@ from flask_login import LoginManager, login_user, current_user, logout_user, log
 from werkzeug.security import generate_password_hash, check_password_hash
 from database import Database
 from classes import User
+#from jinja2 import evalcontextfilter, Markup
 
 app = Flask(__name__)
 app.secret_key = '67992084211'  
@@ -110,13 +111,96 @@ def register():
     return render_template('register.html')
 
 @app.route('/api/v1/scams', methods=['GET'])
-def list_scams():
+def api_scams():  # Nome alterado
     scams = db.get_all_scams()
     return jsonify({
         "status": "success",
         "data": [scam.__dict__ for scam in scams]
     })
 
+@app.route('/scams')
+def list_scams():
+    try:
+        cursor = db.conn.cursor()
+        cursor.execute('''
+            SELECT 
+                scams.id,
+                scams.title,
+                scams.description,
+                scams.scam_type,
+                scams.evidence,
+                scams.created_at,
+                users.name as author
+            FROM scams 
+            JOIN users ON scams.user_id = users.id
+            ORDER BY scams.created_at DESC
+        ''')
+        columns = [column[0] for column in cursor.description]  # Pega os nomes das colunas
+        scams = []
+        
+        for row in cursor.fetchall():
+            # Converte a tupla para dicionário com nomes de colunas
+            scam = dict(zip(columns, row))
+            scams.append(scam)
+            
+        return render_template('scams.html', scams=scams)
+        
+    except Exception as e:
+        flash(f'Erro ao carregar denúncias: {str(e)}', 'error')
+        return redirect(url_for('home'))
+
+@app.route('/report', methods=['GET', 'POST'])
+@login_required
+def report_scam():
+    if request.method == 'POST':
+        # Certifique-se que esses names batem com seu formulário
+        title = request.form.get('title')
+        description = request.form.get('description')
+        scam_type = request.form.get('scam_type')
+        evidence = request.form.get('evidence')
+        
+        try:
+            cursor = db.conn.cursor()
+            cursor.execute('''
+                INSERT INTO scams (title, description, scam_type, evidence, user_id)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (title, description, scam_type, evidence, current_user.id))
+            db.conn.commit()
+            flash('Denúncia registrada com sucesso!', 'success')
+            return redirect(url_for('list_scams'))
+        except Exception as e:
+            flash(f'Erro ao registrar: {str(e)}', 'error')
+    
+    return render_template('report.html')
+
+@app.route('/scams/<int:scam_id>')
+def scam_details(scam_id):
+    try:
+        cursor = db.conn.cursor()
+        cursor.execute('''
+            SELECT 
+                scams.*,
+                users.name as author,
+                users.email as author_email
+            FROM scams 
+            JOIN users ON scams.user_id = users.id
+            WHERE scams.id = ?
+        ''', (scam_id,))
+        
+        columns = [column[0] for column in cursor.description]
+        scam = dict(zip(columns, cursor.fetchone()))
+        
+        return render_template('scam_details.html', scam=scam)
+        
+    except Exception as e:
+        flash(f'Erro ao carregar denúncia: {str(e)}', 'error')
+        return redirect(url_for('list_scams'))
+
+@app.template_filter('is_url')
+def is_url(text):
+    import re
+    url_pattern = re.compile(r'https?://\S+')
+    return bool(url_pattern.match(text)) if text else False
 
 if __name__ == '__main__':
     app.run(debug=True)
