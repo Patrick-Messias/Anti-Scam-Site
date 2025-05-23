@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Editar Comentário</h2>
+    
+    <form method="POST">
+        <div class="mb-3">
+            <textarea name="text" class="form-control" rows="5" required>{{ comment_text }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Salvar</button>
+        <a href="{{ url_for('scam_details', scam_id=scam_id) }}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}

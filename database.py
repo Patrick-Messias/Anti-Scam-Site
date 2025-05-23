@@ -35,6 +35,17 @@ class Database:
                 FOREIGN KEY (user_id) REFERENCES users(id)
             )
         ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS comments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                text TEXT NOT NULL,
+                user_id INTEGER NOT NULL,
+                scam_id INTEGER NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id),
+                FOREIGN KEY (scam_id) REFERENCES scams(id) ON DELETE CASCADE
+            )
+        ''')
         self.conn.commit()
 
     def add_user(self, name, email, password):
