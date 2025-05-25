@@ -122,34 +122,59 @@ def api_scams():  # Nome alterado
 @app.route('/scams')
 def list_scams():
     try:
-        cursor = db.conn.cursor()
-        cursor.execute('''
-            SELECT 
-                scams.id,
-                scams.title,
-                scams.description,
-                scams.scam_type,
-                scams.evidence,
-                scams.created_at,
-                users.name as author
-            FROM scams 
-            JOIN users ON scams.user_id = users.id
-            ORDER BY scams.created_at DESC
-        ''')
-        columns = [column[0] for column in cursor.description]  # Pega os nomes das colunas
-        scams = []
+        # Obter parâmetros de filtro
+        scam_type = request.args.get('type')
+        min_date = request.args.get('min_date')
+        order = request.args.get('order', 'newest')
         
-        for row in cursor.fetchall():
-            # Converte a tupla para dicionário com nomes de colunas
-            scam = dict(zip(columns, row))
-            scams.append(scam)
-            
+        # Query base
+        query = '''
+            SELECT 
+                s.id,
+                s.title,
+                s.description,
+                s.scam_type,
+                s.evidence,
+                s.created_at,
+                u.name as author
+            FROM scams s
+            JOIN users u ON s.user_id = u.id
+            WHERE 1=1
+        '''
+        params = []
+        
+        # Aplicar filtros
+        if scam_type and scam_type != '':
+            query += ' AND s.scam_type = ?'
+            params.append(scam_type)
+        
+        if min_date and min_date != '':
+            query += ' AND DATE(s.created_at) >= ?'
+            params.append(min_date)
+        
+        # Ordenação
+        query += ' ORDER BY s.created_at ' + ('DESC' if order == 'newest' else 'ASC')
+        
+        # DEBUG - Mostrar a query gerada
+        print(f"Executando query: {query}")
+        print(f"Com parâmetros: {params}")
+        
+        # Executar query
+        cursor = db.conn.cursor()
+        cursor.execute(query, params)
+        
+        columns = [column[0] for column in cursor.description]
+        scams = [dict(zip(columns, row)) for row in cursor.fetchall()]
+        
+        # DEBUG - Mostrar resultados
+        print(f"Encontrados {len(scams)} denúncias")
+        
         return render_template('scams.html', scams=scams)
         
     except Exception as e:
         flash(f'Erro ao carregar denúncias: {str(e)}', 'error')
         return redirect(url_for('home'))
-
+    
 @app.route('/report', methods=['GET', 'POST'])
 @login_required
 def report_scam():
@@ -388,6 +413,43 @@ def delete_comment(comment_id):
         flash(f'Erro ao excluir comentário: {str(e)}', 'error')
         return redirect(url_for('list_scams'))
     
+
+@app.route('/scams/<int:scam_id>/vote/<int:vote_type>', methods=['POST'])
+@login_required
+def vote_scam(scam_id, vote_type):
+    try:
+        cursor = db.conn.cursor()
+        cursor.execute('''
+            INSERT OR REPLACE INTO votes (user_id, scam_id, vote_type)
+            VALUES (?, ?, ?)
+        ''', (current_user.id, scam_id, vote_type))
+        db.conn.commit()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+
+@app.route('/scams/filter')
+def filter_scams():
+    scam_type = request.args.get('type')
+    min_date = request.args.get('min_date')
+    # ... outros filtros
+    
+    query = 'SELECT * FROM scams WHERE 1=1'
+    params = []
+    
+    if scam_type:
+        query += ' AND scam_type = ?'
+        params.append(scam_type)
+    # ... adicione outros filtros
+    
+    cursor = db.conn.cursor()
+    cursor.execute(query, params)
+    scams = [dict(zip([col[0] for col in cursor.description], row)) 
+             for row in cursor.fetchall()]
+    
+    return render_template('scams.html', scams=scams)
+
 @app.template_filter('is_url')
 def is_url(text):
     import re

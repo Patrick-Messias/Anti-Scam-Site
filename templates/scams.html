@@ -3,10 +3,64 @@
 {% block content %}
 <div class="container mt-4">
     <h2 class="mb-4">Denúncias Recentes</h2>
-    <a href="{{ url_for('report_scam') }}" class="btn btn-success mb-4">
-        <i class="bi bi-plus-circle"></i> Nova Denúncia
-    </a>
     
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('list_scams') }}">
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <select name="type" class="form-select">
+                            <option value="">Todos os tipos</option>
+                            <option value="Phishing" {% if request.args.get('type') == 'Phishing' %}selected{% endif %}>Phishing</option>
+                            <option value="Fake News" {% if request.args.get('type') == 'Fake News' %}selected{% endif %}>Fake News</option>
+                            <option value="Fraude" {% if request.args.get('type') == 'Fraude' %}selected{% endif %}>Fraude</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <input type="date" name="min_date" class="form-control" 
+                               value="{{ request.args.get('min_date') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <select name="order" class="form-select">
+                            <option value="newest" {% if request.args.get('order') == 'newest' %}selected{% endif %}>Mais recentes</option>
+                            <option value="oldest" {% if request.args.get('order') == 'oldest' %}selected{% endif %}>Mais antigos</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-funnel"></i> Filtrar
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Botão Nova Denúncia e Filtros Ativos -->
+    <div class="d-flex justify-content-between mb-4">
+        <a href="{{ url_for('report_scam') }}" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> Nova Denúncia
+        </a>
+        
+        {% if request.args.get('type') or request.args.get('min_date') %}
+        <div class="alert alert-info py-2 mb-0">
+            Filtros ativos: 
+            {% if request.args.get('type') %}<span class="badge bg-primary">{{ request.args.get('type') }}</span>{% endif %}
+            {% if request.args.get('min_date') %}<span class="badge bg-primary">Desde {{ request.args.get('min_date') }}</span>{% endif %}
+            <a href="{{ url_for('list_scams') }}" class="ms-2"><small>Limpar filtros</small></a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- DEBUG (temporário) -->
+    <div class="d-none">
+        Número de denúncias: {{ scams|length }}
+        <!-- {{ scams|tojson }} -->
+    </div>
+
+    <!-- Lista de Denúncias -->
+    {% if scams %}
     <div class="row">
         {% for scam in scams %}
         <div class="col-md-6 mb-4">
@@ -20,15 +74,15 @@
                         <small class="text-muted">{{ scam['created_at'][:10] }}</small>
                     </div>
                     
-                    <p class="card-text">{{ scam['description'] }}</p>
+                    <p class="card-text">{{ scam['description'][:150] }}{% if scam['description']|length > 150 %}...{% endif %}</p>
                     
                     {% if scam['evidence'] %}
                     <div class="evidence-box mt-3 p-2 bg-light rounded">
                         <strong>Evidência:</strong> 
                         {% if scam['evidence']|is_url %}
-                            <a href="{{ scam['evidence'] }}" target="_blank">Ver evidência</a>
+                            <a href="{{ scam['evidence'] }}" target="_blank" class="text-primary">Ver evidência</a>
                         {% else %}
-                            {{ scam['evidence'] }}
+                            <span class="text-muted">{{ scam['evidence'] }}</span>
                         {% endif %}
                     </div>
                     {% endif %}
@@ -38,7 +92,7 @@
                         <small class="text-muted">Por {{ scam['author'] }}</small>
                         <a href="{{ url_for('scam_details', scam_id=scam['id']) }}" 
                            class="btn btn-sm btn-primary">
-                            <i class="bi bi-eye"></i> Ver Detalhes
+                            <i class="bi bi-eye"></i> Detalhes
                         </a>
                     </div>
                 </div>
@@ -46,5 +100,15 @@
         </div>
         {% endfor %}
     </div>
+    {% else %}
+    <div class="alert alert-warning">
+        Nenhuma denúncia encontrada.
+        {% if request.args.get('type') or request.args.get('min_date') %}
+        <a href="{{ url_for('list_scams') }}" class="alert-link">Limpar filtros</a>
+        {% else %}
+        <a href="{{ url_for('report_scam') }}" class="alert-link">Seja o primeiro a denunciar</a>
+        {% endif %}
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

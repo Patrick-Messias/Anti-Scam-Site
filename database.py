@@ -46,6 +46,17 @@ class Database:
                 FOREIGN KEY (scam_id) REFERENCES scams(id) ON DELETE CASCADE
             )
         ''')
+        cursor.execute('''
+            CREATE TABLE votes (
+                id INTEGER PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                scam_id INTEGER NOT NULL,
+                vote_type INTEGER NOT NULL,  -- 1=like, -1=dislike
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id),
+                FOREIGN KEY (scam_id) REFERENCES scams(id) ON DELETE CASCADE,
+                UNIQUE(user_id, scam_id)  -- Um voto por usuário por denúncia
+        ''')
         self.conn.commit()
 
     def add_user(self, name, email, password):
@@ -82,6 +93,9 @@ class Database:
     def get_all_scams(self):
         cursor = self.conn.cursor()
         cursor.execute('SELECT * FROM scams')
+        print("Total de denúncias no banco:", len(cursor.fetchall()))
+        cursor.execute("PRAGMA table_info(scams)")
+        print("Estrutura da tabela scams:", cursor.fetchall())
         scams = []
         for row in cursor.fetchall():
             scams.append({
