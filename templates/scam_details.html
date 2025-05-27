@@ -11,27 +11,28 @@
             <h2>{{ scam['title'] }}</h2>
         </div>
         <div class="card-body">
-            <!-- Seção de detalhes da denúncia (mantida igual) -->
             <div class="row mb-4">
                 <div class="col-md-6">
                     <p><strong>Tipo:</strong> <span class="badge bg-warning text-dark">{{ scam['scam_type'] }}</span></p>
-                    <p><strong>Data:</strong> {{ scam['created_at'][:16] }}</p>
+                    {# Added 'if scam['created_at'] else 'N/A'' for robustness #}
+                    <p><strong>Data:</strong> {{ scam['created_at'][:16] if scam['created_at'] else 'N/A' }}</p>
                 </div>
                 <div class="col-md-6 text-md-end">
                     <p><strong>Reportado por:</strong> {{ scam['author'] }} ({{ scam['author_email'] }})</p>
                 </div>
             </div>
-            
+
             <div class="mb-4">
                 <h4>Descrição</h4>
                 <p class="text-justify">{{ scam['description'] }}</p>
             </div>
-            
+
             {% if scam['evidence'] %}
             <div class="mb-4">
                 <h4>Evidência</h4>
                 <div class="p-3 bg-light rounded">
-                    {% if scam['evidence']|is_url %}
+                    {# Corrected to use 'is_url' filter if available, otherwise just display #}
+                    {% if scam['evidence']|is_url %} 
                         <a href="{{ scam['evidence'] }}" target="_blank" class="btn btn-outline-primary">
                             <i class="bi bi-link-45deg"></i> Acessar Evidência
                         </a>
@@ -42,61 +43,102 @@
             </div>
             {% endif %}
 
-            <!-- Seção de Comentários - Parte crítica -->
+            {# --- Voting Section (AJAX-based, with logged-in/logged-out states) --- #}
+            {% if current_user.is_authenticated %}
+            <div class="vote-section mb-4">
+                <h5>Avaliação</h5>
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-outline-success vote-btn {% if user_vote == 1 %}active{% endif %}" 
+                            data-vote-type="1" data-scam-id="{{ scam['id'] }}">
+                        <i class="bi bi-hand-thumbs-up"></i> 
+                        <span id="likes-count">{{ likes }}</span>
+                    </button>
+                    <button class="btn btn-outline-danger vote-btn {% if user_vote == -1 %}active{% endif %}" 
+                            data-vote-type="-1" data-scam-id="{{ scam['id'] }}">
+                        <i class="bi bi-hand-thumbs-down"></i> 
+                        <span id="dislikes-count">{{ dislikes }}</span>
+                    </button>
+                </div>
+            </div>
+            {% else %}
+            {# Display for non-authenticated users with disabled buttons and login prompt #}
+            <div class="vote-section mb-4">
+                <h5>Avaliação</h5>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="btn btn-outline-success disabled">
+                        <i class="bi bi-hand-thumbs-up"></i> <span id="likes-count">{{ likes }}</span>
+                    </span>
+                    <span class="btn btn-outline-danger disabled">
+                        <i class="bi bi-hand-thumbs-down"></i> <span id="dislikes-count">{{ dislikes }}</span>
+                    </span>
+                </div>
+                <small class="form-text text-muted mt-2">
+                    <a href="{{ url_for('login', next=request.url) }}">Faça login</a> para votar.
+                </small>
+            </div>
+            {% endif %}
+            {# --- End Voting Section --- #}
+                
             <div class="mt-5">
                 <h4>Comentários</h4>
                 
                 <div id="comments-section">
-                    {% for comment in scam['comments'] %}
-                    <div class="card mb-3 comment-card {% if comment.get('is_editing') %}editing-mode{% endif %}">
-                        <div class="card-body">
-                            {% if comment.get('is_editing') %}
-                            <form method="POST" action="{{ url_for('update_comment', comment_id=comment['id']) }}">
-                                <textarea name="text" class="form-control mb-3" rows="3" required>{{ comment['text'] }}</textarea>
-                                <div class="d-flex justify-content-end gap-2">
-                                    <button type="submit" class="btn btn-success btn-sm">
-                                        <i class="bi bi-check-circle"></i> Salvar
-                                    </button>
-                                    <a href="{{ url_for('scam_details', scam_id=scam['id']) }}" class="btn btn-secondary btn-sm">
-                                        <i class="bi bi-x-circle"></i> Cancelar
-                                    </a>
-                                </div>
-                            </form>
-                            {% else %}
-                            <p class="card-text">{{ comment['text'] }}</p>
-                            <div class="d-flex justify-content-between align-items-center mt-2">
-                                <small class="text-muted">
-                                    Por {{ comment['author'] }} em {{ comment['created_at'][:16] }}
-                                </small>
-                                
-                                {% if current_user.is_authenticated and current_user.id == comment['user_id'] %}
-                                <div class="btn-group comment-actions">
-                                    <a href="{{ url_for('edit_comment', comment_id=comment['id']) }}" 
-                                       class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-pencil"></i> Editar
-                                    </a>
-                                    <form method="POST" 
-                                          action="{{ url_for('delete_comment', comment_id=comment['id']) }}"
-                                          onsubmit="return confirm('Tem certeza que deseja excluir este comentário?')">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">
-                                            <i class="bi bi-trash"></i> Excluir
+                    {% if scam['comments'] %}
+                        {% for comment in scam['comments'] %}
+                        <div class="card mb-3 comment-card {% if comment.get('is_editing') %}editing-mode{% endif %}">
+                            <div class="card-body">
+                                {% if comment.get('is_editing') and current_user.is_authenticated and current_user.id == comment['user_id'] %}
+                                <form method="POST" action="{{ url_for('update_comment', comment_id=comment['id']) }}">
+                                    <textarea name="text" class="form-control mb-3" rows="3" required>{{ comment['text'] }}</textarea>
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <button type="submit" class="btn btn-success btn-sm">
+                                            <i class="bi bi-check-circle"></i> Salvar
                                         </button>
-                                    </form>
+                                        <a href="{{ url_for('scam_details', scam_id=scam['id']) }}" class="btn btn-secondary btn-sm">
+                                            <i class="bi bi-x-circle"></i> Cancelar
+                                        </a>
+                                    </div>
+                                </form>
+                                {% else %}
+                                <p class="card-text">{{ comment['text'] }}</p>
+                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                    <small class="text-muted">
+                                        {# Added 'if comment['created_at'] else 'N/A'' for robustness #}
+                                        Por {{ comment['author'] }} em {{ comment['created_at'][:16] if comment['created_at'] else 'N/A' }}
+                                    </small>
+                                    
+                                    {% if current_user.is_authenticated and current_user.id == comment['user_id'] %}
+                                    <div class="btn-group comment-actions">
+                                        <a href="{{ url_for('edit_comment', comment_id=comment['id']) }}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-pencil"></i> Editar
+                                        </a>
+                                        <form method="POST" 
+                                              action="{{ url_for('delete_comment', comment_id=comment['id']) }}"
+                                              class="d-inline"
+                                              onsubmit="return confirm('Tem certeza que deseja excluir este comentário?')">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-trash"></i> Excluir
+                                            </button>
+                                        </form>
+                                    </div>
+                                    {% endif %}
                                 </div>
                                 {% endif %}
                             </div>
-                            {% endif %}
                         </div>
-                    </div>
-                    {% endfor %}
+                        {% endfor %}
+                    {% else %}
+                        <p>Nenhum comentário ainda.</p>
+                    {% endif %}
                 </div>
 
-                <!-- Formulário para novo comentário (mantido igual) -->
+                {# Comment submission form #}
                 {% if current_user.is_authenticated %}
-                <form method="POST" action="{{ url_for('add_comment', scam_id=scam['id']) }}">
+                <form method="POST" action="{{ url_for('add_comment', scam_id=scam['id']) }}" class="mt-3">
                     <div class="mb-3">
-                        <label for="comment" class="form-label">Adicionar Comentário</label>
-                        <textarea name="text" class="form-control" rows="3" required 
+                        <label for="commentText" class="form-label">Adicionar Comentário</label> 
+                        <textarea name="text" id="commentText" class="form-control" rows="3" required 
                                   placeholder="Digite seu comentário..."></textarea>
                     </div>
                     <button type="submit" class="btn btn-primary">
@@ -104,12 +146,111 @@
                     </button>
                 </form>
                 {% else %}
-                <div class="alert alert-info">
-                    <a href="{{ url_for('login') }}" class="alert-link">Faça login</a> para comentar.
+                <div class="alert alert-info mt-3">
+                    <a href="{{ url_for('login', next=request.url) }}" class="alert-link">Faça login</a> para comentar.
                 </div>
                 {% endif %}
             </div>
+
         </div>
     </div>
 </div>
+
+{# --- JavaScript for AJAX Voting --- #}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const voteButtons = document.querySelectorAll('.vote-btn');
+    
+    voteButtons.forEach(btn => {
+        btn.addEventListener('click', async function() {
+            // Client-side check, server-side @login_required is the actual protection
+            {% if not current_user.is_authenticated %} // TA ERRADO MAS TA CERTO
+                alert('Você precisa estar logado para votar.');
+                // Consider redirecting to login:
+                // window.location.href = "{{ url_for('login', next=request.url) }}";
+                return;
+            {% endif %}
+
+            const scamId = this.dataset.scamId;
+            const voteType = parseInt(this.dataset.voteType); // 1 for like, -1 for dislike
+
+            if (!scamId || isNaN(voteType)) {
+                console.error('Dados inválidos para votação:', {scamId, voteType});
+                alert('Erro nos dados de votação.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/scams/${scamId}/vote`, { // Corrected URL
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest', // Helps Flask identify AJAX
+                        // Include CSRF token if your app uses Flask-WTF or similar for CSRF protection
+                    },
+                    body: JSON.stringify({ vote_type: voteType }) // Send vote_type in body
+                });
+
+                const contentType = response.headers.get('content-type');
+                
+                if (!response.ok) {
+                    let errorMsg = `Erro HTTP ${response.status}: ${response.statusText}`;
+                    if (contentType && contentType.includes('application/json')) {
+                        const errorData = await response.json();
+                        errorMsg = errorData.message || errorMsg;
+                    } else {
+                        errorMsg = `Erro ao processar sua requisição. Detalhes: ${await response.text()}`;
+                    }
+                    throw new Error(errorMsg);
+                }
+                
+                if (!contentType || !contentType.includes('application/json')) {
+                    const errorText = await response.text();
+                    throw new Error(`Resposta do servidor não é JSON: ${errorText}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    document.getElementById('likes-count').textContent = data.likes;
+                    document.getElementById('dislikes-count').textContent = data.dislikes;
+                    
+                    // Update active state of buttons
+                    voteButtons.forEach(b => {
+                        b.classList.remove('active');
+                        if (parseInt(b.dataset.voteType) === data.user_vote) {
+                            b.classList.add('active');
+                        }
+                    });
+                    // Optionally show a success message to the user via flash or a temporary element
+                    // console.log(data.message); 
+                } else {
+                    throw new Error(data.message || "Erro ao processar voto no servidor.");
+                }
+            } catch (error) {
+                console.error('Erro na funcionalidade de voto:', error);
+                alert(error.message || 'Ocorreu um erro ao tentar registrar seu voto. Tente novamente.');
+            }
+        });
+    });
+});
+</script>
+{# --- End JavaScript for AJAX Voting --- #}
+
+{# --- CSS Styles --- #}
+<style>
+.vote-btn.active { /* Kept style from original */
+    font-weight: bold;
+    /* transform: scale(1.05); // Optional: if you want emphasis */
+}
+.vote-btn.disabled, .btn.disabled { /* Style for disabled buttons if user not logged in */
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+.comment-actions .d-inline { /* Ensures delete form is inline */
+    display: inline;
+}
+</style>
+{# --- End CSS Styles --- #}
+
 {% endblock %}

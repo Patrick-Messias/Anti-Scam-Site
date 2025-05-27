@@ -117,3 +117,32 @@
 .gap-2 {
     gap: 0.5rem;
 }
+
+
+
+
+
+
+
+
+
+.votes {
+    display: flex;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.votes button {
+    padding: 5px 10px;
+    border: none;
+    background-color: #eee;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.votes button.active {
+    background-color: #4CAF50;
+    color: white;
+}
+
