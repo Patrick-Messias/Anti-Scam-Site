@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <a href="{{ url_for('home') }}" class="btn btn-outline-secondary mb-4">
+        <i class="bi bi-arrow-left"></i> Voltar para Home
+    </a>
+    
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h2>{{ tutorial['title'] }}</h2>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <p><strong>Criado por:</strong> {{ tutorial['author'] }}</p>
+                    <p><strong>Data:</strong> {{ tutorial['created_at'][:16] }}</p>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <h4>Conteúdo</h4>
+                <p class="text-justify" style="white-space: pre-wrap;">{{ tutorial['content'] }}</p>
+            </div>
+
+            {% if tutorial['youtube_link'] %}
+            <div class="mb-4">
+                <h4>Vídeo Complementar</h4>
+                {% set video_id = tutorial['youtube_link']|youtube_id %}
+                {% if video_id %}
+                <div class="ratio ratio-16x9">
+                    <iframe src="https://www.youtube.com/embed/{{ video_id }}" 
+                            title="YouTube video player" 
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen>
+                    </iframe>
+                </div>
+                {% else %}
+                    <p class="text-muted">Não foi possível carregar o vídeo do YouTube. Link inválido.</p>
+                    <a href="{{ tutorial['youtube_link'] }}" target="_blank" class="btn btn-outline-info btn-sm">Abrir link original</a>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {# Botões de Like/Dislike para Tutorial #}
+            <div class="mt-4 border-top pt-3">
+                <h5>Avalie este Tutorial:</h5>
+                <div class="d-flex align-items-center">
+                    <button class="btn {% if user_tutorial_vote == 1 %}btn-success{% else %}btn-outline-success{% endif %} me-2"
+                            id="likeBtn" data-tutorial-id="{{ tutorial['id'] }}" data-vote-type="1"
+                            {% if not current_user.is_authenticated %}disabled{% endif %}>
+                        <i class="bi bi-hand-thumbs-up-fill"></i> <span id="likeCount">{{ tutorial_likes }}</span>
+                    </button>
+                    <button class="btn {% if user_tutorial_vote == -1 %}btn-danger{% else %}btn-outline-danger{% endif %} me-2"
+                            id="dislikeBtn" data-tutorial-id="{{ tutorial['id'] }}" data-vote-type="-1"
+                            {% if not current_user.is_authenticated %}disabled{% endif %}>
+                        <i class="bi bi-hand-thumbs-down-fill"></i> <span id="dislikeCount">{{ tutorial_dislikes }}</span>
+                    </button>
+                    {% if not current_user.is_authenticated %}
+                        <small class="text-muted">Faça login para avaliar este tutorial.</small>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if can_edit_delete %}
+            <div class="mt-4 border-top pt-3">
+                <h5 class="mb-3">Ações de Gerenciamento</h5>
+                <a href="{{ url_for('edit_tutorial', tutorial_id=tutorial['id']) }}" class="btn btn-warning me-2">
+                    <i class="bi bi-pencil"></i> Editar Tutorial
+                </a>
+                <form method="POST" action="{{ url_for('delete_tutorial', tutorial_id=tutorial['id']) }}" class="d-inline"
+                      onsubmit="return confirm('Tem certeza que deseja excluir este tutorial? Esta ação é irreversível.')">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Excluir Tutorial
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const likeBtn = document.getElementById('likeBtn');
+        const dislikeBtn = document.getElementById('dislikeBtn');
+        const likeCountSpan = document.getElementById('likeCount');
+        const dislikeCountSpan = document.getElementById('dislikeCount');
+
+        async function sendVote(tutorialId, voteType) {
+            try {
+                const response = await fetch(`/tutorial/${tutorialId}/vote`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ vote_type: voteType })
+                });
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    likeCountSpan.textContent = data.likes;
+                    dislikeCountSpan.textContent = data.dislikes;
+
+                    // Atualiza a aparência dos botões
+                    if (data.user_vote === 1) {
+                        likeBtn.classList.add('btn-success');
+                        likeBtn.classList.remove('btn-outline-success');
+                        dislikeBtn.classList.remove('btn-danger');
+                        dislikeBtn.classList.add('btn-outline-danger');
+                    } else if (data.user_vote === -1) {
+                        likeBtn.classList.remove('btn-success');
+                        likeBtn.classList.add('btn-outline-success');
+                        dislikeBtn.classList.add('btn-danger');
+                        dislikeBtn.classList.remove('btn-outline-danger');
+                    } else { // Nenhum voto
+                        likeBtn.classList.remove('btn-success');
+                        likeBtn.classList.add('btn-outline-success');
+                        dislikeBtn.classList.remove('btn-danger');
+                        dislikeBtn.classList.add('btn-outline-danger');
+                    }
+                    // Opcional: mostrar uma mensagem flash de sucesso ou não, já que é assíncrono
+                    // Pode-se usar um pequeno toast ou algo assim para feedback
+                } else {
+                    alert('Erro ao processar o voto: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Erro ao enviar voto:', error);
+                alert('Erro de rede ao processar o voto.');
+            }
+        }
+
+        if (likeBtn) {
+            likeBtn.addEventListener('click', function() {
+                const tutorialId = this.dataset.tutorialId;
+                const voteType = parseInt(this.dataset.voteType);
+                sendVote(tutorialId, voteType);
+            });
+        }
+
+        if (dislikeBtn) {
+            dislikeBtn.addEventListener('click', function() {
+                const tutorialId = this.dataset.tutorialId;
+                const voteType = parseInt(this.dataset.voteType);
+                sendVote(tutorialId, voteType);
+            });
+        }
+    });
+</script>
+
+{% endblock %}

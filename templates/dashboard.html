@@ -7,9 +7,45 @@
     </a>
 
 <div class="container mt-5">
-    <h1>Olá, {{ name }}!</h1>
-    <p>Você está logado como {{ current_user.type_user }}.</p>
-    <a href="{{ url_for('logout') }}" class="btn btn-danger">Sair</a>
-</div>
+    <h1>Bem-vindo ao seu Painel, {{ name }}!</h1>
+    <p>Aqui você pode gerenciar suas atividades no Site Anti-Golpe.</p>
+
+    <div class="row mt-4">
+        <div class="col-md-6 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Minhas Denúncias</h5>
+                    <p class="card-text">Visualize e gerencie as denúncias que você registrou.</p>
+                    <a href="{{ url_for('list_scams') }}" class="btn btn-primary">Ver Denúncias</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Registrar Nova Denúncia</h5>
+                    <p class="card-text">Ajude a comunidade reportando novos golpes e fraudes.</p>
+                    <a href="{{ url_for('report_scam') }}" class="btn btn-success">Reportar Golpe</a>
+                </div>
+            </div>
+        </div>
+        
+        {# Nova opção para criar tutorial #}
+        <div class="col-md-6 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Criar Tutorial</h5>
+                    <p class="card-text">Compartilhe seu conhecimento criando tutoriais para ajudar outros usuários.</p>
+                    <a href="{{ url_for('create_tutorial') }}" class="btn btn-info text-white">Criar Tutorial</a>
+                </div>
+            </div>
+        </div>
+
+        {# Adicione mais cards conforme necessário para outras funcionalidades #}
+    </div>
+
+    <div class="mt-5">
+        <a href="{{ url_for('logout') }}" class="btn btn-danger">Sair</a>
+    </div>
 </div>
 {% endblock %}

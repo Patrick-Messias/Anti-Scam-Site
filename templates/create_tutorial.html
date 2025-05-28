@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-body">
+            <h3 class="card-title text-center mb-4">
+                {% if tutorial %}Editar Tutorial{% else %}Criar Novo Tutorial{% endif %}
+            </h3>
+            <form method="POST" action="{% if tutorial %}{{ url_for('edit_tutorial', tutorial_id=tutorial['id']) }}{% else %}{{ url_for('create_tutorial') }}{% endif %}">
+                <div class="mb-3">
+                    <label for="title" class="form-label">Título do Tutorial</label>
+                    <input type="text" class="form-control" id="title" name="title" required 
+                           value="{{ tutorial['title'] if tutorial else '' }}">
+                </div>
+                <div class="mb-3">
+                    <label for="content" class="form-label">Conteúdo do Tutorial</label>
+                    <textarea class="form-control" id="content" name="content" rows="10" required>{{ tutorial['content'] if tutorial else '' }}</textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="youtube_link" class="form-label">Link do Vídeo do YouTube (Opcional)</label>
+                    <input type="url" class="form-control" id="youtube_link" name="youtube_link" 
+                           placeholder="Ex: https://www.youtube.com/watch?v=VIDEO_ID"
+                           value="{{ tutorial['youtube_link'] if tutorial else '' }}">
+                    <small class="form-text text-muted">O vídeo será incorporado diretamente na página do tutorial.</small>
+                </div>
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        {% if tutorial %}Salvar Alterações{% else %}Criar Tutorial{% endif %}
+                    </button>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -2,8 +2,7 @@
 
 {% block content %}
 
- <!-- Home Page -->
-<div class="container mt-5">
+ <div class="container mt-5">
     <h1>Bem-vindo ao Site Anti-Golpe</h1>
     <p>Denuncie golpes e proteja outros usuários</p>
     
@@ -14,12 +13,7 @@
     {% endif %}
 </div>
 
-<!-- Navbar Section (now handled by base.html) -->
-
-<div class="mb-5"></div>  <!-- Margem bottom de 3rem (48px) -->
-
-<!-- Carousel Section -->
-<div id="carouselExampleIndicators" class="carousel slide mb-4">
+<div class="mb-5"></div>  <div id="carouselExampleIndicators" class="carousel slide mb-4">
     <div class="carousel-indicators">
         <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
     </div>
@@ -38,7 +32,6 @@
     </div>
 </div>
 
-<!-- Prevention Tips Accordion -->
 <div class="accordion mb-4" id="preventionTips">
     <div class="accordion-item">
         <h2 class="accordion-header">
@@ -88,10 +81,34 @@
     {% endif %}
 </div>
 
-<!-- Scam Examples Section -->
+<div class="container mt-5">
+    <h2 class="mb-4">Tutoriais Recentes</h2>
+    {% if tutorials %}
+        <div class="row">
+            {% for tutorial in tutorials %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ tutorial['title'] }}</h5>
+                        <p class="card-text">{{ tutorial['content'][:150] }}...</p> {# Exibe um trecho do conteúdo #}
+                        <a href="{{ url_for('tutorial_details', tutorial_id=tutorial['id']) }}" class="btn btn-primary">Ver Tutorial</a>
+                    </div>
+                    <div class="card-footer text-muted">
+                        Criado por {{ tutorial['author'] }} em {{ tutorial['created_at'][:16] }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>Nenhum tutorial disponível ainda.</p>
+    {% endif %}
+</div>
+
 <div class="container mb-4">
     <div class="row">
-        {% for example in examples %}
+        {# Este loop 'examples' não está sendo passado pelo app.py atualmente, então esta seção pode estar vazia ou causar erro se não for tratada no app.py. Mantido como estava. #}
+        {% for example in examples %} 
         <div class="col text-center text-warning">
             <p>{{ example.title }}</p>
             <img src="{{ url_for('static', filename='images/' + example.image) }}" width="300" alt="{{ example.title }}">
@@ -100,9 +117,9 @@
     </div>
 </div>
 
-<!-- Recent Scams Cards -->
 <div class="row row-cols-1 row-cols-md-3 g-4 mb-4" id="scamList">
-    {% for scam in scams %}
+    {# Este loop 'scams' não está sendo passado pelo app.py da home atualmente, então esta seção pode estar vazia ou causar erro se não for tratada no app.py. Mantido como estava. #}
+    {% for scam in scams %} 
         <div class="col">
             <div class="card h-100">
                 <img src="{{ url_for('static', filename='images/' + scam.image) }}" class="card-img-top" alt="{{ scam.name }}">
@@ -117,5 +134,3 @@
 </div>
 
 {% endblock %}
-
-
