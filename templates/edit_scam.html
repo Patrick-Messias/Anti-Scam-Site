@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <a href="{{ url_for('scam_details', scam_id=scam['id']) }}" class="btn btn-outline-secondary mb-4">
+        <i class="bi bi-arrow-left"></i> Voltar para Detalhes da Denúncia
+    </a>
+    
+    <div class="card shadow">
+        <div class="card-body">
+            <h3 class="card-title text-center mb-4">Editar Denúncia</h3>
+            
+            <form method="POST" action="{{ url_for('update_scam', scam_id=scam['id']) }}">
+                <div class="mb-3">
+                    <label for="title" class="form-label">Título</label>
+                    <input type="text" name="title" id="title" class="form-control" required value="{{ scam['title'] }}">
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Descrição</label>
+                    <textarea name="description" id="description" class="form-control" rows="5" required>{{ scam['description'] }}</textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="scam_type" class="form-label">Tipo de Golpe</label>
+                    <select name="scam_type" id="scam_type" class="form-select" required>
+                        <option value="Phishing" {% if scam['scam_type'] == 'Phishing' %}selected{% endif %}>Phishing</option>
+                        <option value="Fake News" {% if scam['scam_type'] == 'Fake News' %}selected{% endif %}>Fake News</option>
+                        <option value="Fraude" {% if scam['scam_type'] == 'Fraude' %}selected{% endif %}>Fraude</option>
+                        {# Adicione outras opções se você tiver mais tipos de golpes #}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="evidence" class="form-label">Evidência (URL ou descrição)</label>
+                    <input type="text" name="evidence" id="evidence" class="form-control" value="{{ scam['evidence'] if scam['evidence'] else '' }}">
+                    <small class="form-text text-muted">Forneça um link ou uma breve descrição da evidência do golpe.</small>
+                </div>
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                    <a href="{{ url_for('scam_details', scam_id=scam['id']) }}" class="btn btn-secondary">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

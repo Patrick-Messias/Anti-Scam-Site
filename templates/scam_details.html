@@ -15,7 +15,7 @@
                 <div class="col-md-6">
                     <p><strong>Tipo:</strong> <span class="badge bg-warning text-dark">{{ scam['scam_type'] }}</span></p>
                     {# Added 'if scam['created_at'] else 'N/A'' for robustness #}
-                    <p><strong>Data:</strong> {{ scam['created_at'][:16] if scam['created_at'] else 'N/A' }}</p>
+                    <p><strong>Data:</strong> {{ scam['created_at'].strftime('%Y-%m-%d %H:%M') if scam['created_at'] else 'N/A' }}</p>
                 </div>
                 <div class="col-md-6 text-md-end">
                     <p><strong>Reportado por:</strong> {{ scam['author'] }} ({{ scam['author_email'] }})</p>
@@ -149,6 +149,13 @@
                 <div class="alert alert-info mt-3">
                     <a href="{{ url_for('login', next=request.url) }}" class="alert-link">Faça login</a> para comentar.
                 </div>
+                {% endif %}
+
+                {% if can_edit_delete_scam %}
+                    <a href="{{ url_for('edit_scam', scam_id=scam['id']) }}" class="btn btn-warning btn-sm">Editar Denúncia</a>
+                    <form action="{{ url_for('delete_scam', scam_id=scam['id']) }}" method="post" class="d-inline" onsubmit="return confirm('Tem certeza que deseja deletar esta denúncia? Esta ação é irreversível!');">
+                        <button type="submit" class="btn btn-danger btn-sm">Deletar Denúncia</button>
+                    </form>
                 {% endif %}
             </div>
 

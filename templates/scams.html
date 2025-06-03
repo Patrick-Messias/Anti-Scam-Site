@@ -71,7 +71,7 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between mb-3">
                         <span class="badge bg-warning text-dark">{{ scam['scam_type'] }}</span>
-                        <small class="text-muted">{{ scam['created_at'][:10] }}</small>
+                        <small class="text-muted">{{ scam['created_at'].strftime('%Y-%m-%d %H:%M') if scam['created_at'] else 'N/A' }}</small>
                     </div>
                     
                     <p class="card-text">{{ scam['description'][:150] }}{% if scam['description']|length > 150 %}...{% endif %}</p>

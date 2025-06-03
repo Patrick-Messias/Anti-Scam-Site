@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Dashboard de Administração</h1>
+
+    <div class="card shadow mb-4">
+        <div class="card-header bg-dark text-white">
+            <h4 class="mb-0">Gerenciar Usuários</h4>
+        </div>
+        <div class="card-body">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="mb-3">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'success' if category == 'success' else 'danger' if category == 'error' else 'info' }}" role="alert">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nome</th>
+                            <th>E-mail</th>
+                            <th>Confiança</th>
+                            <th>Tutoriais</th>
+                            <th>Denúncias</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user['id'] }}</td>
+                            <td>{{ user['name'] }}</td>
+                            <td>{{ user['email'] }}</td>
+                            <td>
+                                <form action="{{ url_for('admin_update_user_confidence', user_id=user['id']) }}" method="post" class="d-flex align-items-center">
+                                    <input type="number" step="0.1" name="new_confidence" value="{{ user['confidence'] }}" class="form-control form-control-sm me-2" style="width: 80px;" required>
+                                    <button type="submit" class="btn btn-sm btn-primary">Atualizar</button>
+                                </form>
+                            </td>
+                            <td>
+                                {% if user['tutorials'] %}
+                                    <ul class="list-unstyled mb-0">
+                                        {% for tutorial in user['tutorials'] %}
+                                            <li><a href="{{ url_for('tutorial_details', tutorial_id=tutorial['id']) }}">{{ tutorial['title'] }}</a></li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    Nenhum
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user['scams'] %}
+                                    <ul class="list-unstyled mb-0">
+                                        {% for scam in user['scams'] %}
+                                            <li><a href="{{ url_for('scam_details', scam_id=scam['id']) }}">{{ scam['title'] }}</a></li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    Nenhuma
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user['id'] != current_user.id and user['confidence'] < current_user.confidence %} {# Admins não podem se deletar ou deletar admins de nível igual/superior #}
+                                <form action="{{ url_for('admin_delete_user', user_id=user['id']) }}" method="post" class="d-inline" onsubmit="return confirm('Tem certeza que deseja deletar o usuário {{ user['name'] | tojson }}? Esta ação é irreversível!');">
+                                    <button type="submit" class="btn btn-sm btn-danger">Deletar</button>
+                                </form>
+                                {% else %}
+                                    <span class="text-muted">Não Deletável</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

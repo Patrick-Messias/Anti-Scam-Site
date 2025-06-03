@@ -25,6 +25,13 @@ class ClassUtils:
     def atr_list(self):
         print(vars(self))
 
+    @staticmethod
+    def is_valid_email(email):
+        """Valida um endereço de e-mail usando uma expressão regular."""
+        # Expressão regular para validar e-mails
+        email_regex = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+        return re.match(email_regex) is not None
+
 class Site(ClassUtils):
     def __init__(self, name: str, url: str):
         super().__init__()
@@ -37,18 +44,23 @@ class Site(ClassUtils):
 
 
 class User(ClassUtils, UserMixin):
-    def __init__(self, id, name, email, password_hash, type_user='noob',
-                 confidence=1.0, age=None, city=None, state=None, civil_state=None):
+    # Parâmetros na ordem correta para correspondência com os dados do DB
+    def __init__(self, id, name, email, password_hash, type_user='noob', confidence=1.0, 
+                 age=None, city=None, state=None, civil_state=None):
         self.id = id
         self.name = name
         self.email = email
         self.password_hash = password_hash
-        self.type_user = type_user
-        self.confidence = confidence
+        self.type_user = type_user  # Ex: 'admin', 'moderator', 'noob', 'expert'
+        self.confidence = float(confidence) # Garante que confidence é um float, corrigindo o ValueError
         self.age = age
         self.city = city
         self.state = state
         self.civil_state = civil_state
+
+    def get_id(self):
+        """Retorna o ID do usuário como string, como esperado pelo Flask-Login."""
+        return str(self.id)
 
     def permissions_set(self):
         self.can_check_tutorials = self.confidence >= 1.0
@@ -62,6 +74,7 @@ class User(ClassUtils, UserMixin):
         return DigitalScam(name, site, type_scam, 0.0, 0.0, evidence, self)
 
     def check_password(self, password):
+        """Verifica se a senha fornecida corresponde ao hash armazenado."""
         return check_password_hash(self.password_hash, password)
     
 class UserNoob(User):

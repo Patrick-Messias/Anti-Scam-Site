@@ -16,7 +16,7 @@
                 <div class="card-body">
                     <h5 class="card-title">Minhas Denúncias</h5>
                     <p class="card-text">Visualize e gerencie as denúncias que você registrou.</p>
-                    <a href="{{ url_for('list_scams') }}" class="btn btn-primary">Ver Denúncias</a>
+                    <a href="{{ url_for('list_scams', user_id=current_user.id) }}" class="btn btn-primary">Ver Minhas Denúncias</a>
                 </div>
             </div>
         </div>
@@ -40,6 +40,19 @@
                 </div>
             </div>
         </div>
+
+        {# Botão para o Admin Dashboard (apenas se for admin) - AGORA COMO UM CARD #}
+        {% if current_user.is_authenticated and current_user.confidence >= 3.0 %}
+        <div class="col-md-6 mb-3">
+            <div class="card h-100 border-info"> {# Adiciona uma borda colorida para destaque #}
+                <div class="card-body">
+                    <h5 class="card-title text-info"><i class="bi bi-gear me-2"></i> Admin Dashboard</h5>
+                    <p class="card-text">Acesse o painel de administração para gerenciar usuários e conteúdo.</p>
+                    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-info">Acessar Painel Admin</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
 
         {# Adicione mais cards conforme necessário para outras funcionalidades #}
     </div>
